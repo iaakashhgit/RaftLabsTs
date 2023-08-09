@@ -1,0 +1,21 @@
+{
+  "name": "pick",
+  "description": "A simple library for picking random elements of arrays",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mcandre/node-pick.git"
+  },
+  "author": "Andrew Pennebaker <andrew.pennebaker@gmail.com> (http://www.yellosoft.us/)",
+  "main": "pick",
+  "directories": {
+    "lib": "."
+  },
+  "scripts": {
+  },
+  "engines": {
+    "node": "*"
+  },
+  "dependencies": {
+  }
+}

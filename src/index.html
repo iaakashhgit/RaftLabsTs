@@ -1,0 +1,117 @@
+<h1>Real Time Messaging (Room 1)</h1>
+<pre id="messages1" style="height: 200px; overflow: scroll"></pre>
+<input type="text" id="messageBox1" placeholder="Type your message here"
+  style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+<button id="send1" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
+
+<h1>Real Time Messaging (Room 2)</h1>
+<pre id="messages2" style="height: 200px; overflow: scroll"></pre>
+<input type="text" id="messageBox2" placeholder="Type your message here"
+  style="display: block; width: 100%; margin-bottom: 10px; padding: 10px;" />
+<button id="send2" title="Send Message!" style="width: 100%; height: 30px;">Send Message</button>
+
+<script>
+
+  (function () {
+    const sendBtn1 = document.querySelector('#send1');
+    const messages1 = document.querySelector('#messages1');
+    const messageBox1 = document.querySelector('#messageBox1');
+
+    const sendBtn2 = document.querySelector('#send2');
+    const messages2 = document.querySelector('#messages2');
+    const messageBox2 = document.querySelector('#messageBox2');
+
+    let ws1;
+    let ws2;
+
+    console.log("here 1")
+
+    function showMessage(messages, message) {
+      let msg = JSON.parse(message)
+      let chat = msg.content;
+      let person;
+      person = (msg.room == "room1")  ? "Person 1" : "Person 2" ; 
+      
+      //here we are showing msg to receiver
+      messages.textContent += `\n\n ${person}: ${chat}`;
+      messages.scrollTop = messages.scrollHeight;
+
+      //here we are showing msg to sender himself
+      let msgBody = (person == "Person 1") ? messages1 : messages2
+      msgBody.textContent += `\n\n You : ${chat}`;
+      messages.scrollTop = messages.scrollHeight;
+    }
+    function init(room, messages, ws) {
+      if (ws) {
+        ws.onerror = ws.onopen = ws.onclose = null;
+        ws.close();
+      }
+
+      ws = new WebSocket('ws://localhost:3000');
+      ws.onopen = () => {
+        ws.send("dataToSend"); // Send the data to the server immediately after the connection is established
+
+      };
+
+
+      ws.onmessage = ({ data }) => {
+        let stringMessage;
+        if (data instanceof Blob) {
+          // Convert the Blob to a string using FileReader
+          const fileReader = new FileReader();
+          fileReader.onload = function () {
+            stringMessage = fileReader.result;
+            // Now 'stringMessage' contains the message as a string
+            // You can use it and display it on the frontend as required
+            showMessage(messages, stringMessage);
+          };
+          fileReader.readAsText(data); // Convert Blob to string
+        }
+        else {
+          // If the message is already a string, you can directly use it
+          stringMessage = data;
+          showMessage(messages, stringMessage);
+        }
+      };
+
+
+
+      ws.onclose = function () {
+        ws = null;
+      };
+
+      // Update the WebSocket connections
+      if (room === 'room1') {
+        ws1 = ws;
+      } else if (room === 'room2') {
+        ws2 = ws;
+      }
+    }
+
+    sendBtn1.onclick = function () {
+      if (!ws1) {
+        showMessage(messages1, "No WebSocket connection :(");
+        return;
+      }
+      const content = messageBox1.value;
+      // const contentBlob = new Blob([messageBox1.value], { type: 'text/plain' });
+
+      ws1.send(JSON.stringify({ event: 'message', room: 'room1', content, sender: 'Person 1' }));
+      messageBox1.value = ''; // Clear the input box after sending the message
+    };
+    sendBtn2.onclick = function () {
+      if (!ws2) {
+        showMessage(messages2, "No WebSocket connection :(");
+        return;
+      }
+      const content = messageBox2.value;
+      ws2.send(JSON.stringify({ event: 'message', room: 'room2', content, sender: 'Person 2' }));
+      messageBox2.value = ''; // Clear the input box after sending the message
+    };
+
+    // Initialize WebSocket connections and join rooms
+    init('room2', messages2, ws2);
+    init('room1', messages1, ws1) ;
+    // if((init('room2', messages2, ws2)) && (init('room1', messages1, ws1))){}
+  })();
+</script>
